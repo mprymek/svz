@@ -1,0 +1,17 @@
+#!/bin/sh
+
+. settings
+. lib/functions
+
+for i in {1..10}; do 
+ eval name=\$\{vm${i}_name\}
+ [ -z "$name" ] && continue
+ echo Updating config of $name
+ ./sshvm $name sed -i "'s/^HOSTNAME=.*\$/HOSTNAME=$name.$lab_domain/'" /etc/sysconfig/network \; \
+               hostname $name.$lab_domain \; \
+               sed -i "'s/^127\\.0\\.0\\.1[ ]*localhost \\(.*\\)\$/127.0.0.1      $name $name.$lab_domain localhost \1/'" /etc/hosts
+
+ ./sshvm $name salt-call -l warning state.highstate
+done
+
+

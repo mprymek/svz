@@ -1,0 +1,20 @@
+vm1_name=test1
+vm1_base=base_centos6_hdd@base
+vm1_ram=400 
+vm1_ssh_port=2222
+
+vm2_name=test2
+vm2_base=base_centos6_hdd@base 
+vm2_ram=400 
+vm2_ssh_port=2223
+
+
+
+# "root dataset"
+zfs_root="tank/VMs"
+
+# where the root dataset is mounted 
+root="/Volumes/$zfs_root"
+
+# domain to be set on the machines
+lab_domain="example.com"

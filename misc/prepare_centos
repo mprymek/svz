@@ -1,0 +1,32 @@
+#!/bin/sh
+
+key=misc/id_rsa
+epel_arch=i386
+ssh_port=2222
+
+ssh="ssh root@127.0.0.1 -p $ssh_port -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o IdentitiesOnly=yes -i $key"
+
+cat $key.pub | ssh root@127.0.0.1 -p $ssh_port -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+   "mkdir /root/.ssh && chmod 700 /root/.ssh && cat > /root/.ssh/authorized_keys && chmod 600 /root/.ssh/authorized_keys && restorecon -Rv ~/.ssh"
+
+echo "/vbox                   /vbox                    vboxsf  defaults        0 0" | \
+   $ssh "mkdir /vbox; cat >>/etc/fstab"
+
+# we must quote this twice! (first quotes for this shell and second for the remote one)
+#$ssh rm /etc/udev/rules.d/70-persistent-net.rules \; \
+#     sed -i "'s/^\(HWADDR=.*\)$/#\1/;s/^\(UUID=.*\)\$/#\1/'" /etc/sysconfig/network-scripts/ifcfg-eth0 
+
+#curl https://raw.github.com/saltstack/salt-bootstrap/develop/bootstrap-salt.sh | $ssh
+
+# salt
+$ssh rpm -Uvh --force http://mirrors.kernel.org/fedora-epel/6/$epel_arch/epel-release-6-8.noarch.rpm '&&' \
+     yum -y update '&&' \
+     yum -y install PyYAML m2crypto python-crypto python-msgpack python-zmq python-jinja2 salt-minion --enablerepo=epel '&&' \
+     ln -fs /vbox/salt/etc/minion /etc/salt/minion 
+
+# VBox guest additions
+$ssh yum -y install dkms --enablerepo=epel '&&' yum install kernel-devel gcc make \
+     mount /dev/cdrom /mnt '&&' cd /mnt '&&' ./VBoxLinuxAdditions.run '&&' umount /mnt
+
+# optional:
+# in /etc/grub.conf remove "rhgb quiet" and set timeout to zero

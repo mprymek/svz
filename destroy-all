@@ -1,0 +1,11 @@
+#!/bin/sh
+
+. settings
+. lib/functions
+
+for i in {1..10}; do 
+ eval name=\$\{vm${i}_name\}
+ [ -z "$name" ] && continue
+ destroy_vm $name 
+done
+

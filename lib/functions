@@ -1,0 +1,48 @@
+#!/bin/sh
+
+create_vm() {
+   name="$1"
+   base="$2"
+   ram="$3"
+   port="$4"
+   
+   pwd=`pwd`
+   
+   echo "Creating VM $name"
+   
+   #echo "Cloning base hdd"
+   disk="$root/${name}_hdd/box-disk1.vmdk"
+   
+   # clone disk
+   zfs clone "$zfs_root/${base}" "$zfs_root/${name}_hdd"
+   VBoxManage internalcommands sethduuid "$disk" >/dev/null
+
+   # create disk
+   #zfs create -ocompression=on "$zfs_root/${name}_hdd"
+   #(cd "$root/${name}_hdd" && VBoxManage createhd --filename box-disk1.vmdk --size 50000)
+   
+   VBoxManage createvm --name "$name" --basefolder "$root" --register \
+      #| sed -n 's/^UUID: \(.*\)$/\1/p' | tr -d '\012\015' > .vagrant/machines/default/virtualbox/id
+   
+   VBoxManage modifyvm "$name" --ostype Linux --memory "$ram" --nic1 nat --rtcuseutc on
+   VBoxManage storagectl "$name" --name scsi0 --add scsi
+   VBoxManage storageattach "$name" --storagectl scsi0 --type hdd --port 0 --device 0 --medium "$disk"
+   
+   
+   VBoxManage modifyvm "$name" --natpf1 "ssh,tcp,,$4,,22" && \
+   VBoxManage sharedfolder add "$name" --name "/vbox" --hostpath "$pwd/vbox" 
+   
+   #echo "Starting VM"
+   VBoxHeadless --startvm "$name" -e TCP/Ports=5910 &>/dev/null &
+}
+
+destroy_vm() {
+   name="$1"
+   
+   echo "Destroyig VM $name"
+   
+   VBoxManage controlvm "$name" poweroff &>/dev/null
+   VBoxManage unregistervm "$name" --delete &>/dev/null
+   zfs destroy "$zfs_root/${name}_hdd"
+}
+

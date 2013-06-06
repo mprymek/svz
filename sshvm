@@ -1,0 +1,27 @@
+#!/bin/sh
+
+. settings
+. lib/functions
+
+usage() {
+  echo usage: $0 '<vm_name>'
+  exit
+}
+
+vmname=$1
+shift
+
+[ -z "$vmname" ] && usage
+
+for i in {1..10}; do 
+ eval name=\$\{vm${i}_name\}
+ eval ssh_port=\$\{vm${i}_ssh_port\}
+ if [ -z "$name" ]; then
+    echo "No VM named $vmname"
+    exit
+ fi
+ [ "$name" = "$vmname" ] && break
+done
+
+ssh root@127.0.0.1 -p $ssh_port -o LogLevel=FATAL -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+   -o IdentitiesOnly=yes -i misc/id_rsa $@

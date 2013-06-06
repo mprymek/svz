@@ -1,0 +1,16 @@
+#!/bin/sh
+
+. settings
+. lib/functions
+
+for i in {1..10}; do 
+ eval name=\$\{vm${i}_name\}
+ [ -z "$name" ] && continue
+ eval base=\$\{vm${i}_base\}
+ eval ram=\$\{vm${i}_ram\}
+ eval ssh_port=\$\{vm${i}_ssh_port\}
+
+ create_vm $name $base $ram $ssh_port 
+done
+
+
